@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * AppointmentCard component displays appointment info,
+ * allows doctor/patient to take actions like cancel, complete, add notes, or join video call.
+ */
+
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,6 +73,7 @@ export function AppointmentCard({
   } = useFetch(markAppointmentCompleted);
 
   // Format date and time
+  // Converts ISO string to human-friendly date and time format
   const formatDateTime = (dateString) => {
     try {
       return format(new Date(dateString), "MMMM d, yyyy 'at' h:mm a"); // like in "January 1, 2023 at 10:00 AM"
@@ -77,6 +83,7 @@ export function AppointmentCard({
   };
 
   // Format time only
+  // Converts ISO string to human-friendly date and time format
   const formatTime = (dateString) => {
     try {
       return format(new Date(dateString), "h:mm a"); // like as "10:00 AM"
@@ -86,6 +93,7 @@ export function AppointmentCard({
   };
 
   // Check if appointment can be marked as completed
+  // Allow marking completed only if doctor and time has passed
   const canMarkCompleted = () => {
     if (userRole !== "DOCTOR" || appointment.status !== "SCHEDULED") {
       return false;
@@ -99,13 +107,13 @@ export function AppointmentCard({
   const handleCancelAppointment = async () => {
     if (cancelLoading) return;
 
-  if (
+    if (
       window.confirm(
         "Are you sure you want to cancel this appointment? This action cannot be undone."
       )
     ) {
       const formData = new FormData();
-      formData.append("appointmentId", appointment.id); 
+      formData.append("appointmentId", appointment.id);
       await submitCancel(formData);
     }
   };
@@ -194,7 +202,6 @@ export function AppointmentCard({
     }
   }, [notesData, refetchAppointments, router]);
 
-
   //Understand this
   useEffect(() => {
     if (tokenData?.success) {
@@ -214,7 +221,7 @@ export function AppointmentCard({
     const appointmentEndTime = new Date(appointment.endTime);
 
     // Can join 30 minutes before start until end time
-    // getTime() ->  Returns the stored time value in milliseconds 
+    // getTime() ->  Returns the stored time value in milliseconds
     return (
       (appointmentTime.getTime() - now.getTime() <= 30 * 60 * 1000 &&
         now < appointmentTime) ||
@@ -355,8 +362,9 @@ export function AppointmentCard({
                 </div>
               </div>
             </div>
-
             {/* Appointment Time */}
+            {/* Determine if appointment is active (i.e., within 30 mins before
+            start or during meeting) */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground">
                 Scheduled Time
@@ -377,7 +385,6 @@ export function AppointmentCard({
                 </div>
               </div>
             </div>
-
             {/* Status */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground">
@@ -396,7 +403,6 @@ export function AppointmentCard({
                 {appointment.status}
               </Badge>
             </div>
-
             {/* Patient Description */}
             {appointment.patientDescription && (
               <div className="space-y-2">
@@ -412,7 +418,6 @@ export function AppointmentCard({
                 </div>
               </div>
             )}
-
             {/* Join Video Call Button */}
             {appointment.status === "SCHEDULED" && (
               <div className="space-y-2">
@@ -442,8 +447,7 @@ export function AppointmentCard({
                 </Button>
               </div>
             )}
-
-            {/* Doctor Notes (Doctor can view/edit, Patient can only view) */}
+            {/*For doctor: can add/edit notes (when appointment is not cancelled)*/}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-medium text-muted-foreground">
@@ -501,10 +505,10 @@ export function AppointmentCard({
                         "Save Notes"
                       )}
                     </Button>
-                  </div>   
+                  </div>
                 </div>
               ) : (
-                // for patient 
+                // For patient: just view notes
                 <div className="p-3 rounded-md bg-muted/20 border border-emerald-900/20 min-h-[80px]">
                   {appointment.notes ? (
                     <p className="text-white whitespace-pre-line">
